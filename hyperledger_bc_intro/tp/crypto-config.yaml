@@ -1,0 +1,18 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: !!!<CHANGE ME>!!!
+    Specs:
+      - Hostname: orderer
+PeerOrgs:
+  - Name: !!!<CHANGE ME>!!!
+    Domain: !!!<CHANGE ME>!!!
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+  - Name: !!!<CHANGE ME>!!!
+    Domain: !!!<CHANGE ME>!!!
+    Template:
+      Count: 1
+    Users:
+      Count: 1
