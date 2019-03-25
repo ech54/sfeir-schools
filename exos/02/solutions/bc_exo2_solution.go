@@ -24,16 +24,16 @@ import (
 // Block defines a node in blockchain structure.
 type Block struct {
 	ID        string
-	lastID    string
-	createdAt time.Time
-	data      Data
+	LastID    string
+	CreatedAt string
+	Data      Data
 }
 
 // Data structure which contains the transaction data.
 type Data struct {
-	quantity  int
-	reference string
-	price     float32
+	Reference string
+	Quantity  int
+	Price     float32
 }
 
 // Chain structure.
@@ -44,9 +44,8 @@ type Chain struct {
 
 // Enrich chain with a add block feature
 func (chain *Chain) addBlock(b Block) {
-	lastID := chain.last().ID
+	b.LastID = chain.last().ID
 	b.ID = hashBlock(b)
-	b.lastID = lastID
 	chain.lastKey = b.ID
 	chain.blocks[b.ID] = b
 }
@@ -61,16 +60,16 @@ func (chain *Chain) last() Block {
 // Create the default chain structure.
 func genesis() Chain {
 	return Chain{
-		lastKey: "",
+		lastKey: hash([]byte{0}),
 		blocks:  make(map[string]Block),
 	}
 }
 
 // Create a new default block with data.
-func generateBlock(price float32, quantity int, reference string) Block {
+func generateBlock(reference string, quantity int, price float32) Block {
 	return Block{
-		lastID: "", createdAt: time.Now(),
-		data: Data{price: price, quantity: quantity, reference: reference},
+		LastID: time.Now().Format(time.RFC3339), CreatedAt: time.Now().Format(time.RFC3339),
+		Data: Data{Reference: reference, Quantity: quantity, Price: price},
 	}
 }
 
@@ -79,12 +78,10 @@ func hashBlock(b Block) string {
 	if err != nil {
 		panic(err)
 	}
-	//fmt.Println(string(convertedBlock))
 	return hash([]byte(string(convertedBlock)))
 }
 
 func hash(obj []byte) string {
-	fmt.Println(obj)
 	h := sha256.New()
 	_, err := h.Write(obj)
 	if err != nil {
@@ -93,16 +90,21 @@ func hash(obj []byte) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+func prettyPrint(b Block) {
+	j, _ := json.MarshalIndent(b, "", "  ")
+	fmt.Print("\n Block: ", string(j))
+}
+
 func main() {
 	fmt.Println("Simple Block Chain Creation")
 	var blockChain = genesis()
-	// Add tree transactions:
-	blockChain.addBlock(generateBlock(1.2, 5, "croissants"))
-	blockChain.addBlock(generateBlock(2.3, 2, "pains"))
-	blockChain.addBlock(generateBlock(1.77, 4, "croissants"))
+	// Add three transactions:
+	blockChain.addBlock(generateBlock("croissants", 5, 1.2))
+	blockChain.addBlock(generateBlock("pains", 2, 2.3))
+	blockChain.addBlock(generateBlock("croissants", 4, 1.77))
 
 	// Display blockchain
-	for m, v := range blockChain.blocks {
-		fmt.Println("Block: ", m, v)
+	for _, v := range blockChain.blocks {
+		prettyPrint(v)
 	}
 }

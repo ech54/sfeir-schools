@@ -13,6 +13,7 @@ package main
  * - for help on map feature, see: https://blog.golang.org/go-maps-in-action
  */
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -21,14 +22,14 @@ import (
 type Block struct {
 	id        int
 	lastID    int // TODO previous id ...
-	createdAt time.Time
+	createdAt string
 	data      Data
 }
 
 // Data structure which contains the transaction data.
 type Data struct {
-	quantity  int
 	reference string
+	quantity  int
 	price     float32
 }
 
@@ -63,23 +64,28 @@ func genesis() Chain {
 }
 
 // Create a new default block with data.
-func generateBlock(price float32, quantity int, reference string) Block {
+func generateBlock(reference string, quantity int, price float32) Block {
 	return Block{
-		lastID: -1, createdAt: time.Now(),
-		data: Data{price: price, quantity: quantity, reference: reference},
+		lastID: -1, createdAt: time.Now().Format(time.RFC3339),
+		data: Data{reference: reference, quantity: quantity, price: price},
 	}
+}
+
+func prettyPrint(b Block) {
+	j, _ := json.MarshalIndent(b, "", "  ")
+	fmt.Print("\n Block: ", string(j))
 }
 
 func main() {
 	fmt.Println("Simple Block Chain Creation")
 	var blockChain = genesis()
-	// Add tree transactions:
-	blockChain.addBlock(generateBlock(1.2, 5, "croissants"))
-	blockChain.addBlock(generateBlock(2.3, 2, "pains"))
-	blockChain.addBlock(generateBlock(1.77, 4, "croissants"))
+	// Add three transactions:
+	blockChain.addBlock(generateBlock("croissants", 5, 1.2))
+	blockChain.addBlock(generateBlock("pains", 2, 2.3))
+	blockChain.addBlock(generateBlock("croissants", 4, 1.77))
 
 	// Display blockchain
-	for m, v := range blockChain.blocks {
-		fmt.Println("Block: ", m, v)
+	for _, v := range blockChain.blocks {
+		fmt.Println("Block: ", v)
 	}
 }

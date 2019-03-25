@@ -2,9 +2,10 @@ package main
 
 /**
  *-----------------------------------------
- * Exercice: 1
+ * Exercice: 2
  *-----------------------------------------
- * Name: 	"Ledger Baker"
+ * Name: 	Improve block identifier
+ * 			management.
  *-----------------------------------------
  * Objectives:
  *
@@ -13,19 +14,19 @@ package main
  * - for help on map feature, see: https://blog.golang.org/go-maps-in-action
  */
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
-	// --------------------------------------
-	//TODO 1) : add package
-	// "time"
+	"time"
 )
 
 // Block defines a node in blockchain structure.
 type Block struct {
-
-	// --------------------------------------
-	//TODO 2): finish the block structure
-	// - add id, lastID, timestamp (string type)
-	data Data
+	id        int
+	lastID    int // TODO previous id ...
+	createdAt string
+	data      Data
 }
 
 // Data structure which contains the transaction data.
@@ -43,32 +44,58 @@ type Chain struct {
 
 // Enrich chain with a add block feature
 func (chain *Chain) addBlock(b Block) {
-
-	// --------------------------------------
-	//TODO 3): handle :
-	// - last id / current id on new block
-	// - add block to Chain structure
+	lastID := chain.last().id
+	b.id = lastID + 1
+	b.lastID = lastID
+	chain.lastKey = b.id
+	chain.blocks[b.id] = b
 }
 
-// Create the first block for chain structure.
+/**
+ * Enrich chain with a last block function.
+ */
+func (chain *Chain) last() Block {
+	return chain.blocks[chain.lastKey]
+}
+
+// Create the default chain structure.
 func genesis() Chain {
-	// --------------------------------------
-	//TODO 4): review method to init the chain
-	return Chain{}
+	return Chain{
+		lastKey: 0,
+		blocks:  make(map[int]Block),
+	}
 }
 
 // Create a new default block with data.
 func generateBlock(reference string, quantity int, price float32) Block {
 	return Block{
-
-		// --------------------------------------
-		// TODO 5): initialized: id, creation date
-
+		lastID: -1, createdAt: time.Now().Format(time.RFC3339),
 		data: Data{reference: reference, quantity: quantity, price: price},
 	}
 }
 
-// Execute the code in console: "go run bc_exo1.go"
+func hashBlock(b Block) string {
+	convertedBlock, err := json.Marshal(b)
+	if err != nil {
+		panic(err)
+	}
+	return hash([]byte(string(convertedBlock)))
+}
+
+func hash(obj []byte) string {
+	h := sha256.New()
+	_, err := h.Write(obj)
+	if err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func prettyPrint(b Block) {
+	j, _ := json.MarshalIndent(b, "", "  ")
+	fmt.Print("\n Block: ", string(j))
+}
+
 func main() {
 	fmt.Println("Simple Block Chain Creation")
 	var blockChain = genesis()
