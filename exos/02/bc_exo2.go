@@ -14,86 +14,60 @@ package main
  * - for help on map feature, see: https://blog.golang.org/go-maps-in-action
  */
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"time"
 )
 
-// Block defines a node in blockchain structure.
+// Block structure.
 type Block struct {
-	id        int
-	lastID    int // TODO previous id ...
-	createdAt string
-	data      Data
+	ID        string // [1] int -> string
+	LastID    string // [2] int -> string
+	CreatedAt string
+	Data      Data
 }
 
-// Data structure which contains the transaction data.
+// Data structure.
 type Data struct {
-	reference string
-	quantity  int
-	price     float32
+	Reference string
+	Quantity  int
+	Price     float32
 }
 
 // Chain structure.
 type Chain struct {
-	lastKey int
-	blocks  map[int]Block
+	LastKey string
+	Blocks  map[string]Block // [3] int -> string
 }
 
-// Enrich chain with a add block feature
+// add a new block to chain.
 func (chain *Chain) addBlock(b Block) {
-	lastID := chain.last().id
-	b.id = lastID + 1
-	b.lastID = lastID
-	chain.lastKey = b.id
-	chain.blocks[b.id] = b
+	b.LastID = chain.last().ID
+	b.ID = "" // -> TODO use : hashStruct(b)
+	chain.LastKey = b.ID
+	chain.Blocks[b.ID] = b
 }
 
 /**
  * Enrich chain with a last block function.
  */
 func (chain *Chain) last() Block {
-	return chain.blocks[chain.lastKey]
+	return chain.Blocks[chain.LastKey]
 }
 
 // Create the default chain structure.
 func genesis() Chain {
 	return Chain{
-		lastKey: 0,
-		blocks:  make(map[int]Block),
+		LastKey: "", // -> TODO use: hash([]byte{0})
+		Blocks:  make(map[string]Block),
 	}
 }
 
 // Create a new default block with data.
 func generateBlock(reference string, quantity int, price float32) Block {
 	return Block{
-		lastID: -1, createdAt: time.Now().Format(time.RFC3339),
-		data: Data{reference: reference, quantity: quantity, price: price},
+		LastID: time.Now().Format(time.RFC3339), CreatedAt: time.Now().Format(time.RFC3339),
+		Data: Data{Reference: reference, Quantity: quantity, Price: price},
 	}
-}
-
-func hashBlock(b Block) string {
-	convertedBlock, err := json.Marshal(b)
-	if err != nil {
-		panic(err)
-	}
-	return hash([]byte(string(convertedBlock)))
-}
-
-func hash(obj []byte) string {
-	h := sha256.New()
-	_, err := h.Write(obj)
-	if err != nil {
-		panic(err)
-	}
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-func prettyPrint(b Block) {
-	j, _ := json.MarshalIndent(b, "", "  ")
-	fmt.Print("\n Block: ", string(j))
 }
 
 func main() {
@@ -105,7 +79,7 @@ func main() {
 	blockChain.addBlock(generateBlock("croissants", 4, 1.77))
 
 	// Display blockchain
-	for _, v := range blockChain.blocks {
+	for _, v := range blockChain.Blocks {
 		fmt.Println("Block: ", v)
 	}
 }

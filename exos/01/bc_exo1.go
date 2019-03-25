@@ -24,21 +24,21 @@ type Block struct {
 
 	// --------------------------------------
 	//TODO 2): finish the block structure
-	// - add id, lastID, timestamp (string type)
-	data Data
+	// - add ID, LastID, Timestamp (string type)
+	Data Data
 }
 
 // Data structure which contains the transaction data.
 type Data struct {
-	reference string
-	quantity  int
-	price     float32
+	Reference string
+	Quantity  int
+	Price     float32
 }
 
 // Chain structure.
 type Chain struct {
-	lastKey int
-	blocks  map[int]Block
+	LastKey int
+	Blocks  map[int]Block
 }
 
 // Enrich chain with a add block feature
@@ -64,7 +64,7 @@ func generateBlock(reference string, quantity int, price float32) Block {
 		// --------------------------------------
 		// TODO 5): initialized: id, creation date
 
-		data: Data{reference: reference, quantity: quantity, price: price},
+		Data: Data{Reference: reference, Quantity: quantity, Price: price},
 	}
 }
 
@@ -78,7 +78,7 @@ func main() {
 	blockChain.addBlock(generateBlock("croissants", 4, 1.77))
 
 	// Display blockchain
-	for _, v := range blockChain.blocks {
+	for _, v := range blockChain.Blocks {
 		fmt.Println("Block: ", v)
 	}
 }

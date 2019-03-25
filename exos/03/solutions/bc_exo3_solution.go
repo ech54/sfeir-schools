@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"time"
 
@@ -19,9 +18,9 @@ import (
 type Block struct {
 	ID        string `json:"_id,omitempty"`
 	Rev       string `json:"_rev,omitempty"`
-	LastID    string
-	CreatedAt time.Time
-	Data      Data `json:"data"`
+	LastID    string `json:"_LastId,omitempty"`
+	CreatedAt string `json:"_CreatedAt,omitempty"`
+	Data      Data   `json:"Data"`
 }
 
 // GetID returns document id
@@ -36,8 +35,8 @@ func (d *Block) GetRev() string {
 
 // Data structure which contains the transaction data.
 type Data struct {
-	Quantity  int     `json:"quantity,omitempty"`
 	Reference string  `json:"reference,omitempty"`
+	Quantity  int     `json:"quantity,omitempty"`
 	Price     float32 `json:"price,omitempty"`
 }
 
@@ -91,11 +90,11 @@ func hash(obj []byte) string {
 }
 
 // Create a new default block with data.
-func generateBlock(price float32, quantity int, reference string) Block {
+func generateBlock(reference string, quantity int, price float32) Block {
 	return Block{
 		LastID:    "",
-		CreatedAt: time.Now(),
-		Data:      Data{Price: price, Quantity: quantity, Reference: reference},
+		CreatedAt: time.Now().Format(time.RFC3339),
+		Data:      Data{Reference: reference, Price: price, Quantity: quantity},
 	}
 }
 
@@ -167,43 +166,36 @@ func (factory *ClientFactory) execute() couchdb.DatabaseService {
 	return factory.RemoteDatabase
 }
 
-func InitExo4(blockChain Chain, factory ClientFactory) {
-	// Creat three transactions:
-	blockChain.addBlock(generateBlock(1.2, 5, "croissants"))
-	blockChain.addBlock(generateBlock(2.3, 2, "pains"))
-	blockChain.addBlock(generateBlock(1.77, 4, "croissants"))
-
-	//
-	for _, b := range blockChain.blocks {
-		if _, err := factory.execute().Post(&b); err != nil {
-			panic(err)
-		}
-	}
-}
-
-func GetBlockEndpoint(w http.ResponseWriter, r *http.Request) {
-	
-	if r.Method = "GET" {
-		fmt.Fp
-	}
-	
-	//fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
-}
-
 func main() {
 
 	fmt.Println("Simple Block Chain Creation")
 	var blockChain = genesis()
+	// Add three transactions:
+	blockChain.addBlock(generateBlock("croissants", 5, 1.2))
+	blockChain.addBlock(generateBlock("pains", 2, 2.3))
+	blockChain.addBlock(generateBlock("croissants", 4, 1.77))
+
+	// Display blockchain
+	for m, v := range blockChain.blocks {
+		fmt.Println("Block: ", m, v)
+	}
+
 	var factory = ClientFactory{Uri: "127.0.0.1:5984", DbName: "blockchain"}
-	if _, err := factory.connect(); err != nil {
+	_, err := factory.connect()
+	if err != nil {
 		panic(err)
 	}
 	factory.info()
 	if !factory.isDbExists() {
 		factory.createDb()
 	}
-	InitExo4(blockChain, factory)
 
-	http.HandleFunc("/blocks", GetBlockEndpoint)
-	http.ListenAndServe(":8080", nil)
+	for k, b := range blockChain.blocks {
+		fmt.Println(k)
+		fmt.Println(b.Data)
+		_, err = factory.execute().Post(&b)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
