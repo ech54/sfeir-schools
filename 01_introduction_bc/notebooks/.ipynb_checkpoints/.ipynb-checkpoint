@@ -1,0 +1,474 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<img src=\"logo.svg\" style=\"padding-top:30px\">\n",
+    "\n",
+    "<h1> SfeirSchool Blockchain </h1>\n",
+    "<h3> <b>Exercice 3</b> : <i>Scale 'n' Transactions Per Block</i></h3>\n",
+    "<p style=\"padding-top: 20px\">\n",
+    "<code>Objective</code> : That part is focused to improve the scalability of the Block Chain. This exercice will introduced Merkel Tree structure. \n",
+    "</p>\n",
+    "<div class=\"alert alert-block alert-info\">\n",
+    "<h4> <b>Step 1</b></h4>\n",
+    "<p style=\"padding-top: 20px\">\n",
+    "<code>Objective</code> :  Declare all dependencies used by all golang statements.\n",
+    "<div>\n",
+    "<lu>\n",
+    "    <li><b style=\"color:green\">fmt</b>: library to display messages</li>\n",
+    "    <li><b style=\"color:green\">time</b>: library to format time and date object</li> \n",
+    "    <li><b style=\"color:green\">errors</b>: library to manipulate error functions. </li> \n",
+    "    <li><b style=\"color:green\">bytes</b>: functions for the manipulation of byte slices. </li> \n",
+    "    <li><b style=\"color:green\">crypto/sha256</b>: library implements sha256 algorithm</li> \n",
+    "    <li><b style=\"color:green\">encoding/hex</b>: library hex implements hexadecimal encoding and decoding</li> \n",
+    "    <li><b style=\"color:green\">encoding/json</b>: library json implements encoding and decoding of JSON as defined in RFC 7159</li> \n",
+    "</lu>\n",
+    "\n",
+    "<p style=\"color:yellow\"> No task to perform here. Run code</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import (\n",
+    "    \"fmt\"\n",
+    "    \"errors\"\n",
+    "    \"time\"\n",
+    "    \"bytes\"\n",
+    "\t\"crypto/sha256\"\n",
+    "\t\"encoding/hex\"\n",
+    "\t\"encoding/json\"\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<div class=\"alert alert-block alert-info\">\n",
+    "<h4> <b>Step 2</b></h4>\n",
+    "<p style=\"padding-top: 20px\">\n",
+    "<code>Objective</code> : Discover a simple implementation of Merkle Tree.\n",
+    "\n",
+    "Util methods.\n",
+    "\n",
+    "<p style=\"color:yellow\"> No task to perform here. Run code</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "func hashBytes(obj []byte) []byte {\n",
+    "\th := sha256.New()\n",
+    "\t_, err := h.Write(obj)\n",
+    "\tif err != nil {\n",
+    "\t\tpanic(err)\n",
+    "\t}\n",
+    "\treturn h.Sum(nil)\n",
+    "}\n",
+    "\n",
+    "func hash(obj []byte) string {\n",
+    "\treturn hex.EncodeToString(hashBytes(obj))\n",
+    "}\n",
+    "\n",
+    "func PathToString(p [][]byte) []string {\n",
+    "\tvar result []string\n",
+    "\tfor _, v := range p {\n",
+    "\t\tresult = append(result, hex.EncodeToString(v))\n",
+    "\t}\n",
+    "\treturn result\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<div class=\"alert alert-block alert-info\">\n",
+    "<h4> <b> - 1 -</b></h4>\n",
+    "<p style=\"padding-top: 20px\">\n",
+    "<code>Model</code> : MerleTree (or Tree), Node and Transaction.\n",
+    "\n",
+    "\n",
+    "- <b style=\"color:black\">Tree</b> : The merkle tree structure. (root + leaf=nodes)\n",
+    "- <b style=\"color:black\">Node</b> : A node has a parent, and two possible ways (right/left)\n",
+    "- <b style=\"color:black\">Transaction</b> : all data properties for 1 transaction\n",
+    "</p>\n",
+    "</div>\n",
+    "\n",
+    "<p style=\"color:yellow\"> No task to perform here. Run code</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "type Tree struct {\n",
+    "\tRoot       *Node\n",
+    "\tmerkleRoot []byte\n",
+    "\tLeafs      []*Node\n",
+    "}\n",
+    "\n",
+    "type Node struct {\n",
+    "\tParent *Node\n",
+    "\tLeft   *Node\n",
+    "\tRight  *Node\n",
+    "\tleaf   bool\n",
+    "\tdup    bool\n",
+    "\tHash   []byte\n",
+    "\tC      Tx\n",
+    "}\n",
+    "\n",
+    "type Tx struct {\n",
+    "\tUser      string\n",
+    "\tCreatedAt string\n",
+    "\tReference string\n",
+    "\tQuantity  int\n",
+    "\tPrice     float32\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<div class=\"alert alert-block alert-info\">\n",
+    "<h4> <b> - 2 -</b></h4>\n",
+    "<p style=\"padding-top: 20px\">\n",
+    "<code>Behaviors</code> : defines behavior for Transaction, Node and Tree.\n",
+    "\n",
+    "\n",
+    "<p style=\"color:yellow\"> No task to perform here. Run code</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "// Allow to compute the transaction hash\n",
+    "func (d Tx) CalculateHash() []byte {\n",
+    "\tbytesStructure, err := json.Marshal(d)\n",
+    "\tif err != nil {\n",
+    "\t\tpanic(err)\n",
+    "\t}\n",
+    "    return hashBytes([]byte(string(bytesStructure)))\n",
+    "}\n",
+    "// Indicate if the transaction is equals to another one.\n",
+    "func (d Tx) Equals(other Tx) (bool, error) {\n",
+    "\treturn d.CreatedAt == other.CreatedAt && d.User == other.User, nil\n",
+    "}\n",
+    "// Util method to create a new transaction\n",
+    "func NewTx(u string, todayPlus int, r string, q int, p float32) Tx {\n",
+    "\treturn Tx{User: u, CreatedAt: time.Now().Add(time.Duration(todayPlus) * time.Millisecond).Format(time.RFC3339), Reference: r, Quantity: q, Price: p}\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "// Allow to compute the node hash\n",
+    "func (n *Node) calculateNodeHash() ([]byte, error) {\n",
+    "\tif n.leaf {\n",
+    "\t\treturn n.C.CalculateHash(), nil\n",
+    "\t}\n",
+    "\th := sha256.New()\n",
+    "\tif _, err := h.Write(append(n.Left.Hash, n.Right.Hash...)); err != nil {\n",
+    "\t\treturn nil, err\n",
+    "\t}\n",
+    "\treturn h.Sum(nil), nil\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "// Method go through tree to ge the path of a transaction\n",
+    "func (m *Tree) GetMerklePath(content Tx) ([][]byte, []int64, error) {\n",
+    "    //var currentParent *Node\n",
+    "    for _, current := range m.Leafs {\n",
+    "        //var merklePath [][]byte\n",
+    "        //var index []int64\n",
+    "\t\tok, err := current.C.Equals(content)\n",
+    "\t\tif err != nil {\n",
+    "\t\t\treturn nil, nil, err\n",
+    "\t\t}\n",
+    "\t\tif ok {\n",
+    "            currentParent := current.Parent\n",
+    "\t\t\tvar merklePath [][]byte\n",
+    "\t\t\tvar index []int64            \n",
+    "            for currentParent != nil {\n",
+    "                if bytes.Equal(currentParent.Left.Hash, current.Hash) {\n",
+    "                    merklePath = append(merklePath, currentParent.Right.Hash)\n",
+    "                    index = append(index, 1) // right leaf\n",
+    "                } else {\n",
+    "                    merklePath = append(merklePath, currentParent.Left.Hash)\n",
+    "                    index = append(index, 0) // left leaf\n",
+    "                }\n",
+    "                current = currentParent\n",
+    "                currentParent = currentParent.Parent\n",
+    "            }\n",
+    "            return merklePath, index, nil\n",
+    "        }\n",
+    "\t}\n",
+    "\treturn nil, nil, nil\n",
+    "}\n",
+    "// Provide the merkle root.\n",
+    "func (m *Tree) MerkleRoot() []byte {\n",
+    "\treturn m.merkleRoot\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<div class=\"alert alert-block alert-info\">\n",
+    "<h4> <b> - 3 -</b></h4>\n",
+    "<p style=\"padding-top: 20px\">\n",
+    "<code>Algorithm</code> : Main methods to build the merkle tree.\n",
+    "\n",
+    "\n",
+    "<p style=\"color:yellow\"> No task to perform here. Run code</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "// Define a new tree based on transaction array.\n",
+    "// 1- build based on transaction \"Root and Leafs\"\n",
+    "// 2- create the Tree structure\n",
+    "func NewTree(cs []Tx) (*Tree, error) {\n",
+    "\troot, leafs, err := buildWithContent(cs)\n",
+    "\tif err != nil {\n",
+    "\t\treturn nil, err\n",
+    "\t}\n",
+    "\tt := &Tree{Root: root, merkleRoot: root.Hash, Leafs: leafs, }\n",
+    "\treturn t, nil\n",
+    "}\n",
+    "\n",
+    "// 1- iterate on transaction array\n",
+    "// 2- calculate the transaction hash\n",
+    "// 3- create a Node structure based on transaction, hash and flag\n",
+    "// 4- slice all Node on Leaf array\n",
+    "// 5- handle a odd number of transaction, and create a duplicate if needed.\n",
+    "// => The first level of tree (base) is computed.\n",
+    "// 6- Then, create all intermediates => level: n-1, n-2, etc..\n",
+    "func buildWithContent(cs []Tx) (*Node, []*Node, error) {\n",
+    "\tif len(cs) == 0 {\n",
+    "\t\treturn nil, nil, errors.New(\"error: cannot construct tree with no content\")\n",
+    "\t}\n",
+    "\tvar leafs []*Node\n",
+    "\tfor _, c := range cs {\n",
+    "\t\tleafs = append(leafs, &Node{ Hash: c.CalculateHash(), C: c, leaf: true, })\n",
+    "\t}\n",
+    "\tif len(leafs)%2 == 1 {\n",
+    "\t\tduplicate := &Node{\n",
+    "\t\t\tHash: leafs[len(leafs)-1].Hash,\n",
+    "\t\t\tC:    leafs[len(leafs)-1].C,\n",
+    "\t\t\tleaf: true,\n",
+    "\t\t\tdup:  true,\n",
+    "\t\t}\n",
+    "\t\tleafs = append(leafs, duplicate)\n",
+    "\t}\n",
+    "\troot, err := buildIntermediate(leafs)\n",
+    "\tif err != nil {\n",
+    "\t\treturn nil, nil, err\n",
+    "\t}\n",
+    "\treturn root, leafs, nil\n",
+    "}\n",
+    "// 1- iterate every 2 nodes to compute the hash concatenation of that two nodes.\n",
+    "// 2- then create a new node with that 2 previous nodes + computed hash.\n",
+    "// 3- by recurrency iterate again until root level\n",
+    "func buildIntermediate(nl []*Node) (*Node, error) {\n",
+    "\tvar nodes []*Node\n",
+    "\tfor i := 0; i < len(nl); i += 2 {\n",
+    "\t\th := sha256.New()\n",
+    "\t\tvar left, right int = i, i + 1\n",
+    "\t\tif i+1 == len(nl) {\n",
+    "\t\t\tright = i\n",
+    "\t\t}\n",
+    "\t\tchash := append(nl[left].Hash, nl[right].Hash...)\n",
+    "\t\tif _, err := h.Write(chash); err != nil {\n",
+    "\t\t\treturn nil, err\n",
+    "\t\t}\n",
+    "\t\tn := &Node{\n",
+    "\t\t\tLeft:  nl[left],\n",
+    "\t\t\tRight: nl[right],\n",
+    "\t\t\tHash:  h.Sum(nil),\n",
+    "\t\t}\n",
+    "\t\tnodes = append(nodes, n)\n",
+    "\t\tnl[left].Parent = n\n",
+    "\t\tnl[right].Parent = n\n",
+    "\t\tif len(nl) == 2 {\n",
+    "\t\t\treturn n, nil\n",
+    "\t\t}\n",
+    "\t}\n",
+    "\treturn buildIntermediate(nodes)\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<div class=\"alert alert-block alert-info\">\n",
+    "<h4> <b>Step 3</b></h4>\n",
+    "<p style=\"padding-top: 20px\">\n",
+    "<code>Objective</code> : Define four transactions.\n",
+    "\n",
+    "Exemple: \n",
+    "<pre><code>\n",
+    "        var table = struct {\n",
+    "            txs []Tx\n",
+    "        }{\n",
+    "            txs: []Tx{\n",
+    "                NewTx(\"A\", 1, \"Bread\", 1, 0.8), // TODO ...\n",
+    "            },\n",
+    "        }\n",
+    " </code></pre>\n",
+    "\n",
+    "\n",
+    "<p style=\"color:yellow\"> Change code, and Run</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "var table = struct {\n",
+    "\ttxs []Tx\n",
+    "}{\n",
+    "\ttxs: []Tx{\n",
+    "\t\tNewTx(\"A\", 1, \"Bread\", 1, 0.8),//TODO\n",
+    "\t},\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<div class=\"alert alert-block alert-info\">\n",
+    "<p style=\"color:yellow\"> Execute code to view structure</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Exercices - Merkle Tree\n",
+      "\n",
+      "--Data--\n",
+      "\n",
+      "{A 2019-05-11T07:15:02Z Bread 1 0.8} \t ->  20ae9fd7c5406a0469508c22353fec6bc66a1790a673adcbb30fba08a645be6f\n",
+      "{B 2019-05-11T07:15:02Z Croissant 3 1.2} \t ->  96a5b54e2efe55df96078a427ea291747c856f385ae51b566dd7f2e4f38c41b4\n",
+      "{C 2019-05-11T07:15:02Z Bread 5 0.8} \t ->  8b0fe740c5df6bf5c4bcb00d3ed834851a8f50d78eacffbc56ddf8474840624a\n",
+      "{D 2019-05-11T07:15:02Z Croissant 3 1.2} \t ->  7a522050bb6b27ef05483596ba2f707f3ce2dcec6f2d1e3608b6cb614f9bce38\n"
+     ]
+    }
+   ],
+   "source": [
+    "fmt.Println(\"Exercices - Merkle Tree\")\n",
+    "fmt.Println(\"\\n--Data--\\n\")\n",
+    "\n",
+    "for _, v := range table.txs {\n",
+    "    r := v.CalculateHash()\n",
+    "    fmt.Println(v, \"\t -> \", hex.EncodeToString(r))\n",
+    "}\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<div class=\"alert alert-block alert-info\">\n",
+    "<p style=\"color:yellow\"> Execute code to view structure</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "root:  77fa21203dd660c2fa14262841c9d96b36a881a7863ac8afb35712f3426bc33a\n",
+      "tx ->  {A 2019-05-11T07:15:02Z Bread 1 0.8}  tx-hash ->  20ae9fd7c5406a0469508c22353fec6bc66a1790a673adcbb30fba08a645be6f \n",
+      "  -> tx-path:  [96a5b54e2efe55df96078a427ea291747c856f385ae51b566dd7f2e4f38c41b4 b44281777f0115551edb271640e0ec19394202c9464689847ad382f86870571d] \n",
+      " -> index:  [1 1]\n",
+      "tx ->  {B 2019-05-11T07:15:02Z Croissant 3 1.2}  tx-hash ->  96a5b54e2efe55df96078a427ea291747c856f385ae51b566dd7f2e4f38c41b4 \n",
+      "  -> tx-path:  [20ae9fd7c5406a0469508c22353fec6bc66a1790a673adcbb30fba08a645be6f b44281777f0115551edb271640e0ec19394202c9464689847ad382f86870571d] \n",
+      " -> index:  [0 1]\n",
+      "tx ->  {C 2019-05-11T07:15:02Z Bread 5 0.8}  tx-hash ->  8b0fe740c5df6bf5c4bcb00d3ed834851a8f50d78eacffbc56ddf8474840624a \n",
+      "  -> tx-path:  [7a522050bb6b27ef05483596ba2f707f3ce2dcec6f2d1e3608b6cb614f9bce38 8d151e3801ea781a8122af35cec9fe89d1ec58f5a1b23cee65ac99002be62b6e] \n",
+      " -> index:  [1 0]\n",
+      "tx ->  {D 2019-05-11T07:15:02Z Croissant 3 1.2}  tx-hash ->  7a522050bb6b27ef05483596ba2f707f3ce2dcec6f2d1e3608b6cb614f9bce38 \n",
+      "  -> tx-path:  [8b0fe740c5df6bf5c4bcb00d3ed834851a8f50d78eacffbc56ddf8474840624a 8d151e3801ea781a8122af35cec9fe89d1ec58f5a1b23cee65ac99002be62b6e] \n",
+      " -> index:  [0 0]\n"
+     ]
+    }
+   ],
+   "source": [
+    "tree, err := NewTree(table.txs)\n",
+    "fmt.Println(\"root: \", hash(tree.MerkleRoot()))\n",
+    "if err != nil {\n",
+    "    fmt.Println(\"error: unexpected error:  \", err)\n",
+    "}\n",
+    "\n",
+    "for _, v := range table.txs {\n",
+    "    p, i, _ := tree.GetMerklePath(v)\n",
+    "    fmt.Println(\"tx -> \", v, \" tx-hash -> \", hex.EncodeToString(v.CalculateHash()), \n",
+    "                \"\\n  -> tx-path: \", PathToString(p), \"\\n -> index: \", i)\n",
+    "}"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Go",
+   "language": "go",
+   "name": "gophernotes"
+  },
+  "language_info": {
+   "codemirror_mode": "",
+   "file_extension": ".go",
+   "mimetype": "",
+   "name": "go",
+   "nbconvert_exporter": "",
+   "pygments_lexer": "",
+   "version": "go1.11.4"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

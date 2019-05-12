@@ -1,0 +1,13 @@
+#
+version: '2'
+
+services:
+  blockchain-exos:
+    image: gopherdata/gophernotes
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./css/.jupyter:/root/.jupyter/
+      - ./notebooks:/notebooks
+      - ./utils/:/go/utils
+
