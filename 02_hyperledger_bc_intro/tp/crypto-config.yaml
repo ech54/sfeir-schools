@@ -1,17 +1,17 @@
 OrdererOrgs:
   - Name: Orderer
-    Domain: !!!<CHANGE ME>!!!
+    Domain: sfeir.lu
     Specs:
       - Hostname: orderer
 PeerOrgs:
-  - Name: !!!<CHANGE ME>!!!
-    Domain: !!!<CHANGE ME>!!!
+  - Name: Shop
+    Domain: shop.sfeir.lu
     Template:
       Count: 1
     Users:
       Count: 1
-  - Name: !!!<CHANGE ME>!!!
-    Domain: !!!<CHANGE ME>!!!
+  - Name: Warehouse
+    Domain: warehouse.sfeir.lu
     Template:
       Count: 1
     Users:

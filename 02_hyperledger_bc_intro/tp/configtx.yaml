@@ -1,28 +1,28 @@
 Organizations:
     - &OrdererOrg
-        Name: !!!<CHANGE ME>!!!
-        ID: !!!<CHANGE ME>!!!
-        MSPDir: crypto-config/ordererOrganizations/!!!<CHANGE ME>!!!/msp
+        Name: OrdererOrg
+        ID: OrdererMSP
+        MSPDir: crypto-config/ordererOrganizations/sfeir.lu/msp
     - &Org1
-        Name: !!!<CHANGE ME>!!!
-        ID: !!!<CHANGE ME>!!!
-        MSPDir: crypto-config/peerOrganizations/!!!<CHANGE ME>!!!/msp
+        Name: ShopMSP
+        ID: ShopMSP
+        MSPDir: crypto-config/peerOrganizations/shop.sfeir.lu/msp
         AnchorPeers:
-            - Host: !!!<CHANGE ME>!!!
+            - Host: peer0.shop.sfeir.lu
               Port: 7051
     - &Org2
-        Name: !!!<CHANGE ME>!!!
-        ID: !!!<CHANGE ME>!!!
-        MSPDir: crypto-config/peerOrganizations/!!!<CHANGE ME>!!!/msp
+        Name: WarehouseMSP
+        ID: WarehouseMSP
+        MSPDir: crypto-config/peerOrganizations/warehouse.sfeir.lu/msp
         AnchorPeers:
-            - Host: !!!<CHANGE ME>!!!
+            - Host: peer0.warehouse.sfeir.lu
               Port: 7051
 Application: &ApplicationDefaults
     Organizations:
 Orderer: &OrdererDefaults
     OrdererType: solo
     Addresses:
-        - !!!<CHANGE ME>!!!:7050
+        - orderer.sfeir.lu:7050
     BatchTimeout: 2s
     BatchSize:
         MaxMessageCount: 10
