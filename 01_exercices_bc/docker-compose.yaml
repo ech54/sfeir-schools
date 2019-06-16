@@ -8,6 +8,7 @@ services:
       - "8888:8888"
     volumes:
       - ./css/.jupyter:/root/.jupyter/
-      - ./notebooks:/notebooks
+      - ./exercices_concepts:/exercices_concepts
+      - ./exercices_ethereum:/exercices_ethereum
       - ./utils/:/go/utils
 

@@ -1,0 +1,12 @@
+version: '2'
+services:
+    remix-ide:
+        image: 4c0n/remix-ide
+        container_name: remix-ide
+        ports:
+        - 8080:8080
+        - 65520:65520
+        volumes:
+        - ./source/:/app
+
+
