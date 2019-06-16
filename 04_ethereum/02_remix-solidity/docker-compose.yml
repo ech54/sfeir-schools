@@ -1,5 +1,11 @@
 version: '2'
 services:
+    ethereum-local-network:
+        container_name: ethereum-local-network
+        image: trufflesuite/ganache-cli:latest
+        command: bash "ganache-cli -h 0.0.0.0"
+        ports:
+        - 8545:8545
     remix-ide:
         image: 4c0n/remix-ide
         container_name: remix-ide
