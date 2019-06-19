@@ -196,4 +196,3 @@ elif [ "${1}" == "binaries" ]; then
 	export PATH=$PWD/bin:$PATH
 	exec /bin/bash
 fi
-

@@ -1,0 +1,90 @@
+#--------------------------------------------------------------------------------------------------------------------------------------------
+# configure environment.
+
+./init.sh binaries
+
+. init.sh setup
+
+#--------------------------------------------------------------------------------------------------------------------------------------------
+# replace crypto-config.yaml
+
+cryptogen generate --config=./crypto-config.yaml
+
+
+#--------------------------------------------------------------------------------------------------------------------------------------------
+# configure transaction/channel
+
+configtxgen -profile OrdererGenesis -outputBlock ./config/genesis.block
+
+configtxgen -profile TwoOrgChannel -outputCreateChannelTx ./config/channel.tx -channelID sfeircn
+
+configtxgen -profile TwoOrgChannel -outputAnchorPeersUpdate ./config/ShopMSPanchors.tx -channelID sfeircn -asOrg ShopMSP
+
+configtxgen -profile TwoOrgChannel -outputAnchorPeersUpdate ./config/WarehouseMSPanchors.tx -channelID sfeircn -asOrg WarehouseMSP
+
+
+#--------------------------------------------------------------------------------------------------------------------------------------------
+# get network/configure/start
+
+./init.sh docker-images
+
+./init.sh replace-pki
+
+docker-compose -f docker-sfeir.yaml up --remove-orphans -d ca.shop.sfeir.lu ca.warehouse.sfeir.lu orderer.sfeir.lu peer0.shop.sfeir.lu peer0.warehouse.sfeir.lu
+
+docker ps
+
+#--------------------------------------------------------------------------------------------------------------------------------------------
+# install channel
+
+docker exec -e "CORE_PEER_LOCALMSPID=ShopMSP" -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@shop.sfeir.lu/msp"  peer0.shop.sfeir.lu peer channel create -o orderer.sfeir.lu:7050 -c sfeircn -f /etc/hyperledger/configtx/channel.tx
+
+docker exec -e "CORE_PEER_LOCALMSPID=ShopMSP" -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@shop.sfeir.lu/msp"  peer0.shop.sfeir.lu peer channel join -b sfeircn.block
+
+docker exec peer0.warehouse.sfeir.lu peer channel fetch 0 sfeircn.block --channelID sfeircn --orderer orderer.sfeir.lu:7050
+
+docker exec -e "CORE_PEER_LOCALMSPID=WarehouseMSP" -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@warehouse.sfeir.lu/msp"  peer0.warehouse.sfeir.lu peer channel join -b sfeircn.block
+
+
+#--------------------------------------------------------------------------------------------------------------------------------------------
+# install smart contract
+
+docker-compose -f docker-sfeir.yaml up -d cli
+
+
+docker exec cli  peer chaincode install -n sfeircc -v 1.0 -l golang -p github.com/hyperledger/fabric/examples/chaincode/go
+
+
+docker exec -e "CORE_PEER_ADDRESS=peer0.warehouse.sfeir.lu:7051" -e "CORE_PEER_LOCALMSPID=WarehouseMSP" -e "CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/warehouse.sfeir.lu/users/Admin@warehouse.sfeir.lu/msp" cli peer chaincode install -n sfeircc -v 1.0 -l golang -p github.com/hyperledger/fabric/examples/chaincode/go
+
+
+docker exec cli peer chaincode instantiate -o orderer.sfeir.lu:7050 -C sfeircn -n sfeircc -l golang -v 1.0 -c '{"Args":["init"]}'
+
+
+#--------------------------------------------------------------------------------------------------------------------------------------------
+# execute chaincode operation 
+
+docker exec cli peer chaincode invoke -o orderer.sfeir.lu:7050 -C sfeircn -n sfeircc -c '{"Args":["order", "0001", "SHOP_1","SKU002","10000", "1000"]}'
+
+
+docker exec cli peer chaincode invoke -o orderer.sfeir.lu:7050 -C sfeircn -n sfeircc -c '{"Args":["read", "0001"]}'
+
+
+docker exec cli peer chaincode query -C sfeircn -n sfeircc -c '{"Args":["read", "0001"]}'
+
+
+
+
+
+
+
+
+
+
+
+./deploy_explorer.sh dockerConfig logistic_sfeirntw
+
+
+docker exec -i -t blockchain-explorer more logs/app/app.log
+
+
